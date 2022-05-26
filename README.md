@@ -60,3 +60,33 @@ Build, test and deploy container with _Docker_, _Kubernetes_, _Compose_, _Swarm_
     - `$ docker container run --rm --net robin_test centos curl -s search:9200` : will retrieve the two DNS randomly
 
 _NOTE_: The official `nginx` image (`nginx` or `nginx:latest` ) has removed `ping`. So to be able to use this command you can download the `alpine` version.
+
+### Container Images
+
+- An image is an ordered collection of root filesystem changes and the corresponding execution parameters for use within a container runtime. In other words, it is the binaries and dependencies for your app and the metadata on how to run it
+- `$ docker image ls` : shows images
+- `$ docker pull nginx` : pulls the latest image of nginx
+- `$ docker pull nginx:1.21.6` : pulls a specific version image of nginx
+- `$ docker pull nginx:1.21.6-alpine` : pulls the alpine image of nginx - `alpine` is the smallest sized linux distribution
+- `$ docker history nginx:latest` :retrieves the different layers/changes/differences of the image. Each layer is uniquely identified and only stored once on a host what saves storage space and transfer time on push/pull
+- `$ docker image inspect nginx` : retrieves the metadata of the image
+- A container is just a single read/write layer on top of an image
+- `$ docker image tag --help` : info about image tags. The default tag is the _latest_ if not specified. Otherwise: `<user>/<repo>:<tag>`. The official repositories live at the "root namespace" of the registry, so they don't need account name in front of the repo name
+- `$ docker image tag nginx manukem/nginx` : creates a tag. This will create the default `latest`, unless you specify one: `docker image tag manukem/nginx manukem/nginx:testing`
+- `$ docker image push manukem/nginx` : pushes the image to your personal repositories. Note that you will have to log in to be able to push it - `$ docker login`. Remember to logout from shared machines or servers when done to protect your account: `$ docker logout`
+- **Dockerfile** is a recipe to create docker images which filename is standardised but you could use any other name with the flag `-f`: `$ docker build -f some-dockerfile`
+  - Package manager like _apt_ and _yum_ are one of the reasons to build containers from Debian, Ubuntu, Fedora or CentOS, e.g. `FROM debian:stretch-slim`
+  - One of the reason **environment variables** were chosen as preferred way to inject key/value is they work everywhere, on every OS and config, e.g. `ENV NGINX_VERSION 1.13.6-1~stretch`
+  - The order of the layer matters, so all the `RUN` commands must be in order from top to down and separated by double ampersands (`&&`)
+  - Docker handles all the logs for us, so we just need to link the `stdout` and `stderr` to the `access.log` and `error.log`
+  - To expose some ports on the Docker virtual network you should add a `EXPOSE` line. However, you still need to use `-p` or `-P` to open/forward them on host
+  - A last `CMD` is required and it will run when the container is launched. NOTE: Only one _CMD_ is allowed, so if there are multiple, last one wins!
+  - `$ docker image build -t customnginx .` : Run the _Dockerfile_ and provide a repository tag
+  - If you can use an official image, it would be recommended because it would be easier to maintain
+  - `WORKDIR` makes easier to describe where you are going and it is also preferred to using `RUN cd /some.path`
+  - `COPY` is the way to copy your source code from your local machine into the container images
+- You can use **prune** commands to clean up images, volumes, build cache, and containers. For example:
+  - `$ docker image prune` cleans up just "dangling" images
+  - `$ docker system prune` cleans up everything
+  - `$ docker image prune -a` removes all images you are not using
+  - `$ docker system df` to see space usage
